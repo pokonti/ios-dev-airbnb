@@ -8,27 +8,40 @@
 import SwiftUI
 
 struct ExploreView: View {
+    @State private var showDestinationSearchView = false
+    @StateObject var viewModel = ExploreViewModel(service: ExploreService())
     
     var body: some View {
         NavigationStack {
-            VStack{
-                SearchView()
-            }
-            ScrollView {
-                LazyVStack(spacing: 32) {
-                    ForEach(0 ... 10, id: \.self) { listing in
-                        NavigationLink(value: listing){
-                            ListingView()
-                                .frame(height: 400)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+            
+            if showDestinationSearchView {
+                DestinationSearchView(show: $showDestinationSearchView, viewModel: viewModel)
+                
+            } else {
+                VStack{
+                    SearchView(location: $viewModel.searchLocation)
+                        .onTapGesture {
+                            withAnimation(.snappy) {
+                                showDestinationSearchView.toggle()
+                            }
+                        }
+                }
+                ScrollView {
+                    LazyVStack(spacing: 32) {
+                        ForEach(viewModel.listings) { listing in
+                            NavigationLink(value: listing){
+                                ListingView(listing: listing)
+                                    .frame(height: 400)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
                         }
                     }
+                    .padding()
                 }
-                .padding()
-            }
-            .navigationDestination(for: Int.self) { listing in
-                ListingDetailView()
-                    .navigationBarBackButtonHidden()
+                .navigationDestination(for: Listing.self) { listing in
+                    ListingDetailView(listing: listing)
+                        .navigationBarBackButtonHidden()
+                }
             }
         }
     }

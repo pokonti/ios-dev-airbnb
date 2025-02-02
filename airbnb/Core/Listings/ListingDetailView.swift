@@ -10,13 +10,22 @@ import MapKit
 
 struct ListingDetailView: View {
     
-    var images = ["miami","miami-2", "miami-3", "miami-4"]
-    
     @Environment(\.dismiss) var dismiss
+    let listing: Listing
+    @State private var cameraPosition: MapCameraPosition
+    
+    init(listing: Listing){
+        self.listing = listing
+        
+        let region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: listing.latitude, longitude: listing.longitude),
+                                        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
+        self._cameraPosition = State(initialValue: .region(region))
+    }
+    
     var body: some View {
         ScrollView {
             ZStack(alignment: .topLeading) {
-                ImageCarouselView()
+                ImageCarouselView(listing: listing)
                     .frame(height: 320)
                 
                 Button {
@@ -30,28 +39,34 @@ struct ListingDetailView: View {
                                 .frame(width: 32, height: 32)
                         }
                         .padding(32)
+                        .padding(EdgeInsets(top: 20, leading: 0, bottom: 0, trailing: 0))
                 }
                 
             }
                 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Miami Hotel")
+                Text(listing.title)
                     .font(.title)
                     .fontWeight(.semibold)
                 VStack(alignment: .leading) {
                     HStack(spacing: 2) {
                         Image(systemName: "star.fill")
                         
-                        Text("4.86")
+                        Text("\(listing.rating)")
                         
                         Text(" - ")
                         
                         Text("28 reviews")
                             .underline()
                             .fontWeight(.semibold)
+                        
+                        
                     }
                     .font(.caption)
                     .foregroundStyle(.black)
+                    
+                    Text("\(listing.city), \(listing.state)" )
+                        .font(.caption)
                 }
             }
             .padding(.leading)
@@ -61,16 +76,16 @@ struct ListingDetailView: View {
             
             // listing features
             VStack(alignment: .leading, spacing: 16){
-                ForEach(0 ..< 2) { feature in
+                ForEach(listing.features) { feature in
                     HStack(spacing: 12) {
-                        Image(systemName: "medal")
+                        Image(systemName: feature.imageName)
                         
                         VStack(alignment: .leading){
-                            Text("Superhost")
+                            Text(feature.title)
                                 .font(.footnote)
                                 .fontWeight(.semibold)
                             
-                            Text("A Superhost is a host who goes above and beyond to provide excellent hospitality.")
+                            Text(feature.subtitle)
                                 .font(.caption)
                                 .foregroundStyle(.gray)
                         }
@@ -116,12 +131,12 @@ struct ListingDetailView: View {
                 Text("What this place offers")
                     .font(.headline)
                 
-                ForEach(0 ..< 5) { feature in
+                ForEach(listing.amenities) { amenity in
                     HStack {
-                        Image(systemName: "wifi")
+                        Image(systemName: amenity.imageName)
                             .frame(width: 32)
                         
-                        Text("Wifi")
+                        Text(amenity.title)
                             .font(.footnote)
                         
                         Spacer()
@@ -136,15 +151,15 @@ struct ListingDetailView: View {
                 Text("Where you'll be")
                     .font(.headline)
                 
-                Map()
+                Map(position: $cameraPosition)
                     .frame(height: 200)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .padding()
         }
+        .toolbar(.hidden, for: .tabBar)
         .ignoresSafeArea()
         .padding(.bottom, 64)
-//        .padding(.top, 8)
         .overlay(alignment: .bottom) {
             VStack {
                 Divider()
@@ -152,7 +167,7 @@ struct ListingDetailView: View {
                 
                 HStack {
                     VStack(alignment: .leading) {
-                        Text("$500")
+                        Text("$\(listing.pricePerNight)")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                         
@@ -189,5 +204,5 @@ struct ListingDetailView: View {
 }
 
 #Preview {
-    ListingDetailView()
+    ListingDetailView(listing: DeveloperPreview.shared.listings[0])
 }
